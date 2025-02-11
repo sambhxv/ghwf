@@ -2,33 +2,31 @@ import os
 import ast
 import openai
 import subprocess
-from unidiff import PatchSet
 
 openai.api_key = os.environ["OPENAI_API_KEY"]
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4")
 
 def get_changed_lines(file_path):
     try:
-        base_sha = os.environ.get("GITHUB_BASE_SHA")
+        base_sha = os.environ.get("GITHUB_BASE_SHA", os.environ.get("GITHUB_EVENT_PULL_REQUEST_BASE_SHA"))
         head_sha = os.environ["GITHUB_SHA"]
         diff = subprocess.check_output(
             ["git", "diff", "-U0", base_sha, head_sha, "--", file_path]
         ).decode()
         
-        patch = PatchSet(diff)
-        changed_lines = set()
-        for file in patch:
-            for hunk in file:
-                # Collect all lines in the target (new file) range
-                start = hunk.target_start
-                length = hunk.target_length
-                changed_lines.update(range(start, start + length))
-        return list(changed_lines)
+        changed_lines = []
+        for line in diff.split('\n'):
+            if line.startswith('+') and not line.startswith('+++'):
+                parts = line[1:].strip().split(':', 1)
+                if parts and parts[0].isdigit():
+                    changed_lines.append(int(parts[0]))
+        print(changed_lines)
+        return changed_lines
     except Exception as e:
         print(f"Error getting changed lines: {e}")
         return []
 
 def get_functions(file_path):
+    """Parse Python file and return functions with line numbers"""
     with open(file_path, "r") as f:
         code = f.read()
     
@@ -36,76 +34,76 @@ def get_functions(file_path):
     try:
         tree = ast.parse(code)
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(node, ast.FunctionDef):
+                start = node.lineno
+                end = node.end_lineno
                 functions.append({
                     "name": node.name,
-                    "start": node.lineno,
-                    "end": node.end_lineno,
+                    "start": start,
+                    "end": end,
                     "code": ast.get_source_segment(code, node)
                 })
-    except SyntaxError as e:
-        print(f"Syntax error in {file_path}: {e}")
     except Exception as e:
         print(f"Error parsing {file_path}: {e}")
     return functions
 
-def analyze_code(code_snippet):
-    MAX_CODE_LENGTH = 3000
-    truncated = code_snippet[:MAX_CODE_LENGTH] + "\n... (truncated)" if len(code_snippet) > MAX_CODE_LENGTH else code_snippet
+def analyze_code(code):
+    """Send code to OpenAI for review"""
     try:
         response = openai.chat.completions.create(
-            model=MODEL,
+            model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are a senior Python developer. Review this code for quality, bugs, security, performance, and best practices. Provide concise feedback in markdown."},
-                {"role": "user", "content": f"Code to review:\n```python\n{truncated}\n```"}
+                {"role": "system", "content": "You are a senior Python developer. Review this code for:\n- Code quality\n- Potential bugs\n- Security issues\n- Performance improvements\n- Best practices\nProvide concise feedback in markdown."},
+                {"role": "user", "content": f"Code to review:\n```python\n{code}\n```"}
             ],
             temperature=0.2
         )
         return response.choices[0].message.content
     except Exception as e:
-        return f"⚠️ Error generating review: {str(e)}"
+        return f"Error generating review: {str(e)}"
 
 def main():
     review_output = ["## 🤖 AI Code Review Report"]
-    try:
-        base_sha = os.environ.get("GITHUB_BASE_SHA")
-        if not base_sha:
-            raise ValueError("GITHUB_BASE_SHA environment variable not set")
 
+    try:
         changed_files = subprocess.check_output(
-            ["git", "diff", "--name-only", "--diff-filter=d", base_sha, "HEAD", "--", "*.py"]
+            ["git", "diff", "--name-only", "--diff-filter=d", "origin/develop", "HEAD", "*.py"]
         ).decode().splitlines()
 
-        for file_path in changed_files:
-            if not os.path.exists(file_path):
+        for file in changed_files:
+            if not os.path.exists(file):
                 continue
 
-            functions = get_functions(file_path)
-            changed_lines = get_changed_lines(file_path)
-            if not functions or not changed_lines:
+            functions = get_functions(file)
+            changed_lines = get_changed_lines(file)
+
+            if not functions:
                 continue
 
-            review_output.append(f"\n### 📄 File: `{file_path}`")
-            file_reviews = []
+            review_output.append(f"\n### 📁 File: {file}")
 
             for func in functions:
-                if any(func["start"] <= line <= func["end"] for line in changed_lines):
+                modified = any(
+                    func["start"] <= lineno <= func["end"]
+                    for line in changed_lines
+                    if (lineno := int(line.split(':')[0]))
+                ) if changed_lines else False
+
+                if modified:
                     analysis = analyze_code(func["code"])
-                    file_reviews.append(
-                        f"\n#### 🔧 Function: `{func['name']}`\n"
+                    review_output.append(
+                        f"\n#### 🛠 Function: {func['name']}\n"
                         f"{analysis}\n"
-                        f"```python\n{func['code'][:500]}\n...\n```"
+                        f"```python\n{func['code']}\n```"
                     )
-
-            if file_reviews:
-                review_output.extend(file_reviews)
-                
     except Exception as e:
-        review_output.append(f"\n❌ **Critical Error**: {str(e)}")
+        review_output.append(f"\nError processing code review: {str(e)}")
 
-    review_content = '\n'.join(review_output)
-    with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-        f.write(f'REVIEW<<REVIEW_EOF\n{review_content}\nREVIEW_EOF\n')
+    with open('review.md', 'w') as f:
+        f.write('\n'.join(review_output))
+
+    sanitized_review = '\n'.join(review_output).replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')
+    print(f"::set-output name=REVIEW::{sanitized_review}")
 
 if __name__ == "__main__":
     main()
