@@ -6,9 +6,8 @@ import subprocess
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 def get_changed_lines(file_path):
-    """Get changed line numbers using git diff (simplified example)"""
     try:
-        base_sha = os.environ["GITHUB_BASE_SHA"]
+        base_sha = os.environ.get("GITHUB_BASE_SHA", os.environ.get("GITHUB_EVENT_PULL_REQUEST_BASE_SHA"))
         head_sha = os.environ["GITHUB_SHA"]
         diff = subprocess.check_output(
             ["git", "diff", "-U0", base_sha, head_sha, "--", file_path]
