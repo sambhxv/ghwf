@@ -9,4 +9,4 @@ runs:
   steps:
     - name: Run OpenAI Code Review Script
       shell: bash
-      run: node index.js
+      run: node review-code/index.js
