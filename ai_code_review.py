@@ -2,6 +2,7 @@ import os
 import ast
 import openai
 import subprocess
+import urllib.parse
 
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
@@ -60,6 +61,9 @@ def analyze_code(code):
     except Exception as e:
         return f"Error generating review: {str(e)}"
 
+def sanitize_output(text):
+    return urllib.parse.quote(text, safe='')
+
 def main():
     review_output = ["## 🤖 AI Code Review Report"]
 
@@ -78,7 +82,7 @@ def main():
             if not functions:
                 continue
 
-            review_output.append(f"\n### 📁 File: {file}")
+            review_output.append(f"\n### 📁 File: {sanitize_output(file)}")
 
             for func in functions:
                 modified = any(
@@ -90,14 +94,13 @@ def main():
                 if modified:
                     analysis = analyze_code(func["code"])
                     review_output.append(
-                        f"\n#### 🛠 Function: {func['name']}\n"
-                        f"{analysis}\n"
-                        f"```python\n{func['code']}\n```"
+                        f"\n#### 🛠 Function: {sanitize_output(func['name'])}\n"
+                        f"{sanitize_output(analysis)}\n"
+                        f"```python\n{sanitize_output(func['code'])}\n```"
                     )
     except Exception as e:
-        review_output.append(f"\nError processing code review: {e}")
+        review_output.append(f"\nError processing code review: {sanitize_output(str(e))}")
 
-    # Write sanitized output to review.md
     with open('review.md', 'w') as f:
         f.write('\n'.join(review_output))
 
