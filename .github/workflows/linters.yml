@@ -12,25 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  commit-lint:
-    name: 'Semantic Commits'
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 200
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          check-latest: true
-
-      - name: Check commit titles
-        run: |
-          npm install @commitlint/cli @commitlint/config-conventional
-          npx commitlint --verbose --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
-
   linter:
     name: 'Semgrep Rules'
     runs-on: ubuntu-latest
