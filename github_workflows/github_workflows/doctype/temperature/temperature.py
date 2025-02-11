@@ -5,9 +5,9 @@
 from frappe.model.document import Document
 import frappe
 
-def gehsfvsh():
-    num = 544
+def oweihfowsd():
+    num = 545
     frappe.msgprint(2 * num)
 
 class Temperature(Document):
-	gehsfvsh()
+	oweihfowsd()
