@@ -5,9 +5,9 @@
 from frappe.model.document import Document
 import frappe
 
-def skdj():
+def jsdfhjk():
     request = "lololmao"
     frappe.msgprint(request)
 
 class Temperature(Document):
-	skdj()
+	jsdfhjk()
