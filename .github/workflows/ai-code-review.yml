@@ -24,7 +24,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install openai gitpython
+        pip install openai gitpython unidiff requests
 
     - name: Set environment variables for SHAs
       run: |
