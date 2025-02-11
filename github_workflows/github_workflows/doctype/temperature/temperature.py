@@ -3,7 +3,8 @@
 
 # import frappe
 from frappe.model.document import Document
+import frappe
 
 
 class Temperature(Document):
-	print("hehe")
+	frappe.msgprint("hehe")
