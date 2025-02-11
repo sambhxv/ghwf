@@ -1,0 +1,51 @@
+name: OpenAI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  code-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA | grep -E '\.(py|js|json|md)$' || true)
+          echo "DIFF<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGED_FILES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Generate diff content
+        id: diff-content
+        run: |
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          DIFF_CONTENT=""
+          while IFS= read -r file; do
+            if [ ! -z "$file" ] && [ -f "$file" ]; then
+              echo "Processing $file"
+              DIFF_CONTENT+="=== $file ===\n"
+              DIFF_CONTENT+=$(git diff $BASE_SHA $HEAD_SHA -- "$file" || echo "Failed to diff $file")
+              DIFF_CONTENT+="\n\n"
+            fi
+          done <<< "${{ steps.changed-files.outputs.DIFF }}"
+          
+          echo "CONTENT<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$DIFF_CONTENT" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Run OpenAI Code Review
+        uses: ./my-openai-code-review
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          diff-content: ${{ steps.diff-content.outputs.CONTENT }}
