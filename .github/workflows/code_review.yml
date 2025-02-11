@@ -21,7 +21,15 @@ jobs:
         run: |
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
-          echo "DIFF=$(git diff --name-only $BASE_SHA $HEAD_SHA | grep -E '\.(py|js|json|md)$' || true)" >> $GITHUB_OUTPUT
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA | grep -E '\.(py|js|json|md)$' || true)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          # Properly format multiline output for GITHUB_OUTPUT
+          {
+            echo "DIFF<<EOF"
+            echo "$CHANGED_FILES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Generate diff content
         id: diff-content
@@ -31,19 +39,20 @@ jobs:
           DIFF_CONTENT=""
           
           while IFS= read -r file; do
-            if [ ! -z "$file" ]; then
+            if [ ! -z "$file" ] && [ -f "$file" ]; then
               echo "Processing $file"
               DIFF_CONTENT+="=== $file ===\n"
-              DIFF_CONTENT+=$(git diff $BASE_SHA $HEAD_SHA -- "$file")
+              DIFF_CONTENT+=$(git diff $BASE_SHA $HEAD_SHA -- "$file" || echo "Failed to diff $file")
               DIFF_CONTENT+="\n\n"
             fi
           done <<< "${{ steps.changed-files.outputs.DIFF }}"
           
-          # Escape content for GitHub Actions
-          DIFF_CONTENT="${DIFF_CONTENT//'%'/'%25'}"
-          DIFF_CONTENT="${DIFF_CONTENT//$'\n'/'%0A'}"
-          DIFF_CONTENT="${DIFF_CONTENT//$'\r'/'%0D'}"
-          echo "CONTENT=$DIFF_CONTENT" >> $GITHUB_OUTPUT
+          # Use proper multiline output syntax for GITHUB_OUTPUT
+          {
+            echo "CONTENT<<EOF"
+            echo "$DIFF_CONTENT"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Get OpenAI Review
         id: openai-review
@@ -54,7 +63,9 @@ jobs:
         with:
           script: |
             const OpenAI = require('openai');
-            const openai = new OpenAI(process.env.OPENAI_API_KEY);
+            const openai = new OpenAI({
+              apiKey: process.env.OPENAI_API_KEY
+            });
             
             const prompt = `Please review the following code changes for a Frappe app and provide a concise code review. Focus on:
             1. Potential bugs or issues
