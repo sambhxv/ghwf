@@ -98,11 +98,9 @@ def main():
     except Exception as e:
         review_output.append(f"\nError processing code review: {str(e)}")
 
-    # Write the markdown file
     with open('review.md', 'w') as f:
         f.write('\n'.join(review_output))
 
-    # Escape special characters for GitHub Actions output
     sanitized_review = '\n'.join(review_output).replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')
     print(f"::set-output name=REVIEW::{sanitized_review}")
 
