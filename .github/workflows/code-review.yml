@@ -96,7 +96,7 @@ jobs:
           Provide detailed feedback on potential issues, improvements, and best practices."""
 
           response = openai.chat.completions.create(
-              model="gpt-4",
+              model="gpt-4o-mini",
               messages=[
                   {"role": "system", "content": "You are a code reviewer providing actionable feedback."},
                   {"role": "user", "content": prompt}
