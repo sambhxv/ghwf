@@ -1,6 +1,12 @@
 name: OpenAI Code Review
 description: Composite action to perform OpenAI code review
+inputs:
+  diff-content:
+    description: "Content of code diff"
+    required: true
 runs:
   using: "composite"
   steps:
-    - run: node index.js
+    - name: Run OpenAI Code Review Script
+      shell: bash
+      run: node index.js
