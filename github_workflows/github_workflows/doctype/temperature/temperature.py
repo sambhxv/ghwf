@@ -5,6 +5,9 @@
 from frappe.model.document import Document
 import frappe
 
+def call_demo_api():
+    request = "lololmao"
+    frappe.msgprint(request)
 
 class Temperature(Document):
-	frappe.msgprint("hehe")
+	call_demo_api()
