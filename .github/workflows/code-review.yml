@@ -11,7 +11,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # ensures full git history so we have base and head commits
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -40,7 +40,6 @@ jobs:
               exit(1)
 
           function_lines = []
-          # Naïve regex to detect added Python function definitions
           pattern = re.compile(r'^\+\s*def\s+')
           capture = False
           current_function = []
@@ -50,7 +49,6 @@ jobs:
                       function_lines.append("\n".join(current_function))
                       current_function = []
                   capture = True
-                  # Remove the '+' that git adds to diff lines
                   current_function.append(line.lstrip('+').rstrip('\n'))
               elif capture:
                   if line.startswith('+'):
@@ -75,52 +73,42 @@ jobs:
         run: |
           pip install openai
           python - <<'EOF'
-          import os
           import openai
-          import sys
+          import os
 
-          openai_api_key = os.environ.get('OPENAI_API_KEY')
-          if not openai_api_key:
-              print("OPENAI_API_KEY environment variable not set.")
-              sys.exit(1)
-          openai.api_key = openai_api_key
+          openai.api_key = os.getenv("OPENAI_API_KEY")
 
           try:
-              with open('changed_functions.txt', 'r') as f:
-                  changed_functions = f.read()
+              with open("changed_functions.txt", "r") as file:
+                  changed_functions = file.read()
           except Exception as e:
               print("Error reading changed_functions.txt:", e)
-              sys.exit(1)
+              exit(1)
 
           if not changed_functions.strip():
               print("No changed functions to review.")
-              sys.exit(0)
+              exit(0)
 
-          prompt = (
-              "Please perform a code review for the following changed functions:\n\n"
-              f"{changed_functions}\n\n"
-              "Provide detailed feedback on potential issues, improvements, and best practices."
-          )
+          prompt = f"""Perform a code review for the following changed functions:
+          
+          {changed_functions}
+          
+          Provide detailed feedback on potential issues, improvements, and best practices."""
 
           response = openai.ChatCompletion.create(
-              model="gpt-3.5-turbo",
+              model="gpt-4",
               messages=[
-                  {
-                      "role": "system", 
-                      "content": "You are a senior code reviewer. Tell it like it is, don't sugar-coat responses."
-                  },
+                  {"role": "system", "content": "You are a code reviewer providing actionable feedback."},
                   {"role": "user", "content": prompt}
               ],
-              temperature=0.2,
           )
 
-          review = response['choices'][0]['message']['content']
+          review_content = response['choices'][0]['message']['content']
           print("OpenAI Code Review:")
-          print(review)
+          print(review_content)
 
-          # Save the review to a file so it can be posted as a PR comment.
-          with open("code_review.txt", "w") as f:
-              f.write(review)
+          with open("code_review.txt", "w") as file:
+              file.write(review_content)
           EOF
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
