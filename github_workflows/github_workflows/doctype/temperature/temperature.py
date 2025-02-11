@@ -6,8 +6,8 @@ from frappe.model.document import Document
 import frappe
 
 def lshfkshd():
-    request = "lololmao"
-    frappe.msgprint(request)
+    num = 544
+    frappe.msgprint(2 * num)
 
 class Temperature(Document):
 	lshfkshd()
