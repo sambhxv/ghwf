@@ -65,7 +65,7 @@ def main():
     
     # Get changed Python files
     changed_files = subprocess.check_output(
-        ["git", "diff", "--name-only", "--diff-filter=d", "origin/main", "HEAD", "*.py"]
+        ["git", "diff", "--name-only", "--diff-filter=d", "origin/develop", "HEAD", "*.py"]
     ).decode().splitlines()
 
     for file in changed_files:
