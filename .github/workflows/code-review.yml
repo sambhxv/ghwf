@@ -69,9 +69,12 @@ jobs:
             print(f"Extracted changed functions written to {output_file}")
           EOF
 
+      - name: Upgrade OpenAI Library
+        run: pip install --upgrade openai
+
       - name: Run OpenAI Code Review
         run: |
-          pip install openai
+          pip install openai # Might be redundant after upgrade, but harmless
           python - <<'EOF'
           import openai
           import os
