@@ -33,40 +33,40 @@ jobs:
           diff_file = 'diff.patch'
           output_file = 'changed_functions.txt'
           try:
-              with open(diff_file, 'r') as f:
-                  diff_content = f.readlines()
+            with open(diff_file, 'r') as f:
+              diff_content = f.readlines()
           except Exception as e:
-              print("Error reading diff file:", e)
-              exit(1)
+            print("Error reading diff file:", e)
+            exit(1)
 
           function_lines = []
           pattern = re.compile(r'^\+\s*def\s+')
           capture = False
           current_function = []
           for line in diff_content:
-              if pattern.match(line):
-                  if current_function:
-                      function_lines.append("\n".join(current_function))
-                      current_function = []
-                  capture = True
-                  current_function.append(line.lstrip('+').rstrip('\n'))
-              elif capture:
-                  if line.startswith('+'):
-                      current_function.append(line.lstrip('+').rstrip('\n'))
-                  else:
-                      function_lines.append("\n".join(current_function))
-                      current_function = []
-                      capture = False
+            if pattern.match(line):
+              if current_function:
+                function_lines.append("\n".join(current_function))
+                current_function = []
+              capture = True
+              current_function.append(line.lstrip('+').rstrip('\n'))
+            elif capture:
+              if line.startswith('+'):
+                current_function.append(line.lstrip('+').rstrip('\n'))
+              else:
+                function_lines.append("\n".join(current_function))
+                current_function = []
+                capture = False
           if current_function:
-              function_lines.append("\n".join(current_function))
+            function_lines.append("\n".join(current_function))
 
           if not function_lines:
-              print("No changed functions detected.")
+            print("No changed functions detected.")
           else:
-              with open(output_file, 'w') as f:
-                  for func in function_lines:
-                      f.write(func + "\n\n")
-              print(f"Extracted changed functions written to {output_file}")
+            with open(output_file, 'w') as f:
+              for func in function_lines:
+                f.write(func + "\n\n")
+            print(f"Extracted changed functions written to {output_file}")
           EOF
 
       - name: Run OpenAI Code Review
@@ -79,36 +79,44 @@ jobs:
           openai.api_key = os.getenv("OPENAI_API_KEY")
 
           try:
-              with open("changed_functions.txt", "r") as file:
-                  changed_functions = file.read()
+            with open("changed_functions.txt", "r") as file:
+              changed_functions = file.read()
           except Exception as e:
-              print("Error reading changed_functions.txt:", e)
-              exit(1)
+            print("Error reading changed_functions.txt:", e)
+            exit(1)
 
           if not changed_functions.strip():
-              print("No changed functions to review.")
-              exit(0)
+            print("No changed functions to review.")
+            exit(0)
 
           prompt = f"""Perform a code review for the following changed functions:
-          
+
           {changed_functions}
-          
+
           Provide detailed feedback on potential issues, improvements, and best practices."""
 
-          response = openai.chat.completions.create(
-              model="gpt-4o-mini",
+          try:
+            response = openai.chat.completions.create(
+              model="gpt-4",  # Or gpt-3.5-turbo if you prefer
               messages=[
-                  {"role": "system", "content": "You are a code reviewer providing actionable feedback."},
-                  {"role": "user", "content": prompt}
+                {"role": "system", "content": "You are a code reviewer providing actionable feedback."},
+                {"role": "user", "content": prompt}
               ],
-          )
+            )
+            review_content = response.choices[0].message.content
+            print("OpenAI Code Review:")
+            print(review_content)
 
-          review_content = response['choices'][0]['message']['content']
-          print("OpenAI Code Review:")
-          print(review_content)
-
-          with open("code_review.txt", "w") as file:
+            with open("code_review.txt", "w") as file:
               file.write(review_content)
+
+          except openai.error.OpenAIError as e:
+            print(f"OpenAI API Error: {e}")
+            exit(1)
+          except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            exit(1)
+
           EOF
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -118,17 +126,21 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const review = fs.readFileSync('code_review.txt', { encoding: 'utf8' });
-            if (!review || review.trim() === "") {
-              console.log("No review content to post.");
-              return;
+            try {
+              const review = fs.readFileSync('code_review.txt', { encoding: 'utf8' });
+              if (!review || review.trim() === "") {
+                console.log("No review content to post.");
+                return;
+              }
+              const prNumber = context.payload.pull_request.number;
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: review
+              });
+            } catch (error) {
+              console.error("Error posting comment:", error);
             }
-            const prNumber = context.payload.pull_request.number;
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: review
-            });
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
