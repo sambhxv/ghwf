@@ -62,41 +62,44 @@ def analyze_code(code):
 
 def main():
     review_output = ["## 🤖 AI Code Review Report"]
-    
-    # Get changed Python files
-    changed_files = subprocess.check_output(
-        ["git", "diff", "--name-only", "--diff-filter=d", "origin/develop", "HEAD", "*.py"]
-    ).decode().splitlines()
 
-    for file in changed_files:
-        if not os.path.exists(file):
-            continue
-            
-        functions = get_functions(file)
-        changed_lines = get_changed_lines(file)
-        
-        if not functions:
-            continue
-            
-        review_output.append(f"\n### 📁 File: {file}")
-        
-        for func in functions:
-            # Check if function was modified
-            modified = any(
-                func["start"] <= lineno <= func["end"]
-                for line in changed_lines
-                if (lineno := int(line.split(':')[0]))
-            ) if changed_lines else False
-            
-            if modified:
-                analysis = analyze_code(func["code"])
-                review_output.append(
-                    f"\n#### 🛠 Function: {func['name']}\n"
-                    f"{analysis}\n"
-                    f"```python\n{func['code']}\n```"
-                )
+    try:
+        changed_files = subprocess.check_output(
+            ["git", "diff", "--name-only", "--diff-filter=d", "origin/develop", "HEAD", "*.py"]
+        ).decode().splitlines()
 
-    print('\n'.join(review_output))
+        for file in changed_files:
+            if not os.path.exists(file):
+                continue
+
+            functions = get_functions(file)
+            changed_lines = get_changed_lines(file)
+
+            if not functions:
+                continue
+
+            review_output.append(f"\n### 📁 File: {file}")
+
+            for func in functions:
+                modified = any(
+                    func["start"] <= lineno <= func["end"]
+                    for line in changed_lines
+                    if (lineno := int(line.split(':')[0]))
+                ) if changed_lines else False
+
+                if modified:
+                    analysis = analyze_code(func["code"])
+                    review_output.append(
+                        f"\n#### 🛠 Function: {func['name']}\n"
+                        f"{analysis}\n"
+                        f"```python\n{func['code']}\n```"
+                    )
+    except Exception as e:
+        review_output.append(f"\nError processing code review: {e}")
+
+    # Write sanitized output to review.md
+    with open('review.md', 'w') as f:
+        f.write('\n'.join(review_output))
 
 if __name__ == "__main__":
     main()
