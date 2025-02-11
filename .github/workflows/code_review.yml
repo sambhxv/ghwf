@@ -16,6 +16,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install OpenAI package
+        run: npm install openai
+
       - name: Get changed files
         id: changed-files
         run: |
@@ -24,7 +32,6 @@ jobs:
           CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA | grep -E '\.(py|js|json|md)$' || true)
           echo "Changed files:"
           echo "$CHANGED_FILES"
-          # Properly format multiline output for GITHUB_OUTPUT
           {
             echo "DIFF<<EOF"
             echo "$CHANGED_FILES"
@@ -47,7 +54,6 @@ jobs:
             fi
           done <<< "${{ steps.changed-files.outputs.DIFF }}"
           
-          # Use proper multiline output syntax for GITHUB_OUTPUT
           {
             echo "CONTENT<<EOF"
             echo "$DIFF_CONTENT"
@@ -62,7 +68,7 @@ jobs:
           DIFF_CONTENT: ${{ steps.diff-content.outputs.CONTENT }}
         with:
           script: |
-            const OpenAI = require('openai');
+            const { default: OpenAI } = await import('openai');
             const openai = new OpenAI({
               apiKey: process.env.OPENAI_API_KEY
             });
@@ -87,7 +93,6 @@ jobs:
 
               const review = completion.choices[0].message.content;
               
-              // Post review as PR comment
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
