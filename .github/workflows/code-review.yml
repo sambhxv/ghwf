@@ -74,7 +74,7 @@ jobs:
 
       - name: Run OpenAI Code Review
         run: |
-          pip install openai # Might be redundant after upgrade, but harmless
+          pip install openai  # Redundant after upgrade, but harmless
           python - <<'EOF'
           import openai
           import os
@@ -100,7 +100,7 @@ jobs:
 
           try:
             response = openai.chat.completions.create(
-              model="gpt-4",  # Or gpt-3.5-turbo if you prefer
+              model="gpt-4",  # Or gpt-3.5-turbo
               messages=[
                 {"role": "system", "content": "You are a code reviewer providing actionable feedback."},
                 {"role": "user", "content": prompt}
