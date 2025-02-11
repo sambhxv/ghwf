@@ -28,9 +28,7 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        python ai_code_review.py > review.md
-        REVIEW_CONTENT=$(cat review.md | sed 's/%/%25/g; s/\n/%0A/g; s/\r/%0D/g')
-        echo "REVIEW=$REVIEW_CONTENT" >> $GITHUB_OUTPUT
+        python ai_code_review.py
 
     - name: Create PR comment
       uses: peter-evans/create-or-update-comment@v3
