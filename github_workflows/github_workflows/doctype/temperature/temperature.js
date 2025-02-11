@@ -4,6 +4,5 @@
 frappe.ui.form.on("Temperature", {
 	refresh(frm) {
         console.log(frm)
-        console.log("hehe")
 	},
 });
