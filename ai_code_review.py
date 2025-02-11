@@ -16,7 +16,9 @@ def get_changed_lines(file_path):
         changed_lines = []
         for line in diff.split('\n'):
             if line.startswith('+') and not line.startswith('+++'):
-                changed_lines.append(line[1:].strip())
+                parts = line[1:].strip().split(':', 1)
+                if parts and parts[0].isdigit():
+                    changed_lines.append(int(parts[0]))
         return changed_lines
     except Exception as e:
         print(f"Error getting changed lines: {e}")
