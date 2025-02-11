@@ -43,7 +43,7 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Run OpenAI Code Review
-        uses: ./my-openai-code-review
+        uses: ./review-code
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
