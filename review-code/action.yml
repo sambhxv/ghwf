@@ -1,12 +1,6 @@
 name: OpenAI Code Review
-description: Automated code review using OpenAI API
-inputs:
-  diff-content:
-    description: "Content of code diff"
-    required: true
-outputs:
-  review-comment:
-    description: "Generated OpenAI code review"
+description: Composite action to perform OpenAI code review
 runs:
-  using: "node16"
-  main: "index.js"
+  using: "composite"
+  steps:
+    - run: node index.js
