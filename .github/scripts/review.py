@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 import sys
 import json
@@ -23,10 +22,10 @@ def get_code_review(diff_text, openai_api_key):
         {
             "role": "system",
             "content": (
-                "You are a code review and testing assistant. "
-                "Provide critical review of the following pull request diff. "
+                "You are a code review and test assistant. "
+                "Provide a detailed and critical review of the following pull request diff. "
                 "Point out potential issues, pitfalls, and offer improvement suggestions where applicable. "
-                "Also suggest test-cases if and only if there are functional level changes in the code which may require test cases to be verified."
+                "Also suggest test-cases whereever there are logical changes."
             )
         },
         {"role": "user", "content": diff_text}
@@ -44,7 +43,6 @@ def get_code_review(diff_text, openai_api_key):
     return response.choices[0].message.content.strip()
 
 def main():
-    # Ensure required environment variables are present.
     github_event_path = os.environ.get("GITHUB_EVENT_PATH")
     if not github_event_path:
         print("Error: GITHUB_EVENT_PATH not set.", file=sys.stderr)
@@ -52,7 +50,6 @@ def main():
     with open(github_event_path, 'r') as f:
         event_data = json.load(f)
 
-    # Extract pull request number from the event payload.
     pr = event_data.get("pull_request")
     if not pr:
         print("Error: This event is not a pull_request.", file=sys.stderr)
@@ -62,14 +59,12 @@ def main():
         print("Error: Could not determine pull request number.", file=sys.stderr)
         sys.exit(1)
 
-    # Extract repository info.
     repo_full = os.environ.get("GITHUB_REPOSITORY")
     if not repo_full or "/" not in repo_full:
         print("Error: GITHUB_REPOSITORY not set or invalid.", file=sys.stderr)
         sys.exit(1)
     owner, repo = repo_full.split("/")
 
-    # Get authentication tokens.
     github_token = os.environ.get("GITHUB_TOKEN")
     if not github_token:
         print("Error: GITHUB_TOKEN not set.", file=sys.stderr)
@@ -79,7 +74,6 @@ def main():
         print("Error: OPENAI_API_KEY not set.", file=sys.stderr)
         sys.exit(1)
 
-    # Log messages to stderr so only the review output goes to stdout.
     print(f"Fetching diff for PR #{pr_number} in {owner}/{repo}...", file=sys.stderr)
     diff_text = get_pr_diff(owner, repo, pr_number, github_token)
     if not diff_text:
@@ -89,7 +83,6 @@ def main():
     print("Sending diff to OpenAI for code review...", file=sys.stderr)
     review = get_code_review(diff_text, openai_api_key)
 
-    # Output only the review content to stdout.
     print(review)
 
 if __name__ == "__main__":
