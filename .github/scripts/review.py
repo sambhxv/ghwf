@@ -26,7 +26,7 @@ def get_code_review(diff_text, openai_api_key):
                 "Provide a critical and crisp, to-the-point review of the following pull request diff. "
                 "Point out potential issues and offer improvement suggestions where applicable. "
                 "Also suggest test-cases wherever there are logical changes."
-                "IMPORTANT: Do not provide any extra information, "
+                "IMPORTANT: Do not provide any extra information, give only the problems with code."
             )
         },
         {"role": "user", "content": diff_text}
