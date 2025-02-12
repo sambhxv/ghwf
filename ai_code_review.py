@@ -168,13 +168,8 @@ Provide specific, actionable feedback with examples where relevant."""
 def main():
     reviewer = CodeReviewer()
     review = reviewer.generate_review()
-    
-    # Save review to file
-    Path('review.md').write_text(review)
-    
-    # Output for GitHub Actions
-    sanitized_review = review.replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')
-    print(f"::set-output name=REVIEW::{sanitized_review}")
+    print(review)
+    return review
 
 if __name__ == "__main__":
     main()
