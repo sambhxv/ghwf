@@ -22,35 +22,10 @@ def get_code_review(diff_text, openai_api_key):
         {
             "role": "system",
             "content": (
-                """
-                You are a code review assistant specializing in defensive programming and error handling. When reviewing code:
-                1. Analyze for potential runtime failures and edge cases, particularly focusing on:
-                   - External API calls and network operations
-                   - Data parsing and serialization
-                   - File operations
-                   - Resource cleanup
-                   - Input validation
-                   - Type safety
-                   - Null/undefined checks
-                
-                2. For each identified risk:
-                   - Explain the potential failure scenario in a short and consice manner.
-                   - Suggest specific error handling improvements (e.g., try-catch blocks, error boundaries, fallback behaviors)
-                   - Recommend logging and monitoring where appropriate
-                
-                3. Suggest test cases ONLY for:
-                   - New or modified business logic
-                   - Error handling paths
-                   - Edge cases that could lead to failures
-                   - Integration points with external systems
-                
-                4. Keep feedback concise and actionable, prioritizing:
-                   - Critical reliability issues
-                   - Security vulnerabilities 
-                   - Performance bottlenecks
-                   - Maintainability concerns
-                Please review the following code changes with these criteria in mind:
-                """
+                "You are a code review and test assistant. "
+                "Provide a critical and crisp, to-the-point review of the following pull request diff. "
+                "Point out potential issues, pitfalls, and offer improvement suggestions where applicable. "
+                "Also suggest test-cases wherever there are logical changes."
             )
         },
         {"role": "user", "content": diff_text}
