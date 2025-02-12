@@ -25,7 +25,7 @@ class CodeReviewer:
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         self.base_ref = os.environ.get("GITHUB_BASE_REF", "develop")
         self.head_ref = os.environ.get("GITHUB_HEAD_REF", "HEAD")
-        print("os_environ: " + os.environ)
+        print(os.environ)
 
     @lru_cache(maxsize=100)
     def get_changed_lines(self, file_path: Path) -> Dict[int, str]:
@@ -105,7 +105,7 @@ Provide specific, actionable feedback with examples where relevant."""
                 temperature=0.1,
                 max_tokens=1000
             )
-            print("openai_response: " + response.choices[0].message.content)
+            print(response.choices[0].message.content)
             return response.choices[0].message.content
             
         except Exception as e:
@@ -124,7 +124,7 @@ Provide specific, actionable feedback with examples where relevant."""
                 if item.a_path.endswith('.py')
             ]
 
-            print("changed_files: " + changed_files)
+            print(changed_files)
 
             for file_path in changed_files:
                 if not file_path.exists():
@@ -132,8 +132,8 @@ Provide specific, actionable feedback with examples where relevant."""
 
                 changed_lines = self.get_changed_lines(file_path)
                 functions = self.parse_functions(file_path)
-                print("changed_lines: " + changed_lines)
-                print("functions: " + functions)
+                print(changed_lines)
+                print(functions)
                 
                 if not functions or not changed_lines:
                     continue
