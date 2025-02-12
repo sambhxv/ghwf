@@ -4,10 +4,13 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+permissions:
+  issues: write
+  contents: read
+
 jobs:
   review:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -26,5 +29,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          python .github/scripts/review_pr.py
+        run: python .github/scripts/review_pr.py
