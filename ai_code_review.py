@@ -166,7 +166,6 @@ Provide specific, actionable feedback with examples where relevant."""
             return f"# ❌ Error Generating Review\n\nAn error occurred: {str(e)}"
 
 def main():
-    return "HEHE"
     reviewer = CodeReviewer()
     review = reviewer.generate_review()
     
