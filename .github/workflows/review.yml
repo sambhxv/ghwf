@@ -1,4 +1,4 @@
-name: Code review and test cases suggestions
+name: Review suggestions
 
 on:
   pull_request:
