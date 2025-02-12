@@ -169,7 +169,7 @@ def main():
     reviewer = CodeReviewer()
     review = reviewer.generate_review()
     print(review)
-    return review
+    return "hehe"
 
 if __name__ == "__main__":
     main()
