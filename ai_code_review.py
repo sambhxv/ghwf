@@ -104,7 +104,6 @@ Provide specific, actionable feedback with examples where relevant."""
                 temperature=0.1,
                 max_tokens=1000
             )
-            print(response.choices[0].message.content)
             return response.choices[0].message.content
             
         except Exception as e:
@@ -123,7 +122,6 @@ Provide specific, actionable feedback with examples where relevant."""
                 if item.a_path.endswith('.py')
             ]
 
-            print(changed_files)
 
             for file_path in changed_files:
                 if not file_path.exists():
@@ -131,7 +129,6 @@ Provide specific, actionable feedback with examples where relevant."""
 
                 changed_lines = self.get_changed_lines(file_path)
                 functions = self.parse_functions(file_path)
-                print(changed_lines)
                 print(functions)
                 
                 if not functions or not changed_lines:
