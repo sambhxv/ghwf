@@ -23,24 +23,42 @@ def get_code_review(diff_text, openai_api_key):
         {
             "role": "system",
             "content": (
-                "You are a code review assistant. "
-                "Provide a detailed and critical review of the following pull request diff. "
-                "Point out potential issues, pitfalls, and offer improvement suggestions where applicable."
+                "You are a code review assistant. Provide a detailed and critical review "
+                "of the following pull request diff. Point out potential issues, pitfalls, "
+                "and offer improvement suggestions where applicable."
             )
         },
         {"role": "user", "content": diff_text}
     ]
     try:
-        response = openai.chat.completions.create(
-            model="gpt-4o-mini",
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
             messages=messages,
-            max_tokens=5000,
+            max_tokens=1024,
             temperature=0.2
         )
     except Exception as e:
         print(f"Error calling OpenAI API: {e}", file=sys.stderr)
         sys.exit(1)
     return response.choices[0].message.content.strip()
+
+def post_pr_comment(owner, repo, pr_number, comment, github_token):
+    """
+    Posts a comment to the pull request using the provided GitHub token.
+    When using the default GITHUB_TOKEN provided by GitHub Actions,
+    the comment will appear as posted by github-actions[bot].
+    """
+    url = f"https://api.github.com/repos/{owner}/{repo}/issues/{pr_number}/comments"
+    headers = {
+        "Authorization": f"token {github_token}",
+        "Accept": "application/vnd.github+json"
+    }
+    data = {"body": comment}
+    response = requests.post(url, headers=headers, json=data)
+    if response.status_code != 201:
+        print(f"Error posting comment: HTTP {response.status_code}: {response.text}", file=sys.stderr)
+        sys.exit(1)
+    return response.json()
 
 def main():
     # Ensure required environment variables are present.
@@ -51,7 +69,7 @@ def main():
     with open(github_event_path, 'r') as f:
         event_data = json.load(f)
 
-    # Extract pull request number from the event payload.
+    # Extract pull request data from the event payload.
     pr = event_data.get("pull_request")
     if not pr:
         print("Error: This event is not a pull_request.", file=sys.stderr)
@@ -61,7 +79,7 @@ def main():
         print("Error: Could not determine pull request number.", file=sys.stderr)
         sys.exit(1)
 
-    # Extract repository info.
+    # Extract repository information.
     repo_full = os.environ.get("GITHUB_REPOSITORY")
     if not repo_full or "/" not in repo_full:
         print("Error: GITHUB_REPOSITORY not set or invalid.", file=sys.stderr)
@@ -87,8 +105,10 @@ def main():
     print("Sending diff to OpenAI for code review...")
     review = get_code_review(diff_text, openai_api_key)
 
-    print("\n==== Code Review ====\n")
-    print(review)
+    # Post the review as a comment on the pull request.
+    print("Posting code review as a comment on the PR (using github-actions bot)...")
+    post_pr_comment(owner, repo, pr_number, review, github_token)
+    print("Comment posted successfully!")
 
 if __name__ == "__main__":
     main()
