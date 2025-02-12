@@ -3,6 +3,6 @@
 
 frappe.ui.form.on("Temperature", {
 	refresh(frm) {
-        console.log("webufhcbse csjkc shc sjkdcn ,")
+        console.log("webufhcbse csjkc sjkdcn ,")
 	},
 });
