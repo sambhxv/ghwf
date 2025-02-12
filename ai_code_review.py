@@ -171,6 +171,7 @@ def main():
     reviewer = CodeReviewer()
     review = reviewer.generate_review()
     print("171")
+    return "return"
 
 if __name__ == "__main__":
     main()
