@@ -43,5 +43,5 @@ jobs:
       uses: peter-evans/create-or-update-comment@v3
       with:
         issue-number: ${{ github.event.pull_request.number }}
-        body: ${{ steps.ai_review.outputs }}
+        body: ${{ steps.ai_review.outputs.REVIEW }}
         token: ${{ secrets.GITHUB_TOKEN }}
