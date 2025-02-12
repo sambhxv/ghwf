@@ -35,8 +35,8 @@ def get_code_review(diff_text, openai_api_key):
         response = openai.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
-            max_tokens=1200,
-            temperature=0.5
+            max_tokens=1500,
+            temperature=2
         )
     except Exception as e:
         print(f"Error calling OpenAI API: {e}", file=sys.stderr)
