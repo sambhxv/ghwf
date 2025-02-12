@@ -9,8 +9,10 @@ class TrackRecord(Document):
 	pass
 
 def update_duration(docname):
-	doc = frappe.get_doc("Track Record", docname)
-	if doc.units and doc.units.isdigit():
-		doc.duration = int(doc.units) * 2
-		doc.save()
-		frappe.db.commit()
+    doc = frappe.get_doc("Track Record", docname)
+    response = json.loads(doc.key_json)
+    frappe.msgprint(response)
+    if doc.units and doc.units.isdigit():
+        doc.duration = int(doc.units) * 2
+        doc.save()
+        frappe.db.commit()
