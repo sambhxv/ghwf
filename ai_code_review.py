@@ -168,7 +168,7 @@ Provide specific, actionable feedback with examples where relevant."""
 def main():
     reviewer = CodeReviewer()
     review = reviewer.generate_review()
-    print(review)
+    print("171")
     return "hehe"
 
 if __name__ == "__main__":
