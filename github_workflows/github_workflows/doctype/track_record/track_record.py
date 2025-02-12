@@ -1,7 +1,7 @@
 # Copyright (c) 2025, Ambibuzz Technologies LLP and contributors
 # For license information, please see license.txt
 
-import frappe
+import frappe, json
 from frappe.model.document import Document
 
 
@@ -10,6 +10,8 @@ class TrackRecord(Document):
 
 def update_duration(docname):
     doc = frappe.get_doc("Track Record", docname)
+    response = json.loads(doc.key_json)
+    frappe.msgprint(response)
     if doc.units and doc.units.isdigit():
         doc.duration = int(doc.units) * 2
         doc.save()
