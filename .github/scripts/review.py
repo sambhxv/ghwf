@@ -25,12 +25,11 @@ def get_code_review(diff_text, openai_api_key):
                 "You are a code review and test assistant. "
                 "Provide a critical and crisp, to-the-point review of the following pull request diff. "
                 "Point out potential issues, pitfalls, and offer improvement suggestions where applicable. "
-                "Also suggest test-cases whereever there are logical changes."
+                "Also suggest test-cases wherever there are logical changes."
             )
         },
         {"role": "user", "content": diff_text}
     ]
-    print(messages)
     try:
         response = openai.chat.completions.create(
             model="gpt-4o-mini",
