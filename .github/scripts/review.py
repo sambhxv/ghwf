@@ -30,6 +30,7 @@ def get_code_review(diff_text, openai_api_key):
         },
         {"role": "user", "content": diff_text}
     ]
+    print(messages)
     try:
         response = openai.chat.completions.create(
             model="gpt-4o-mini",
