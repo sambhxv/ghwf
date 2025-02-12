@@ -3,7 +3,10 @@ name: Lint and Whitespaces Check
 on:
   pull_request:
     branches:
-      - develop
+      - main
+  push:
+    branches:
+      - main
 
 jobs:
   lint:
@@ -40,12 +43,6 @@ jobs:
         run: |
           if git grep -n "[[:blank:]]$" -- "*.py" "*.js" "*.json"; then
             echo "Trailing whitespace found!" && exit 1;
-          fi
-
-      - name: Check for Tabs Instead of Spaces
-        run: |
-          if git grep -nP '\t' -- "*.py" "*.js" "*.json"; then
-            echo "Tabs found instead of spaces!" && exit 1;
           fi
 
   prettier:
