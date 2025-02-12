@@ -36,12 +36,11 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        python ai_code_review.py > review.md
-        echo "REVIEW=$(cat review.md)" >> $GITHUB_OUTPUT
+        python ai_code_review.py >> $GITHUB_OUTPUT
 
     - name: Create PR comment
       uses: peter-evans/create-or-update-comment@v3
       with:
         issue-number: ${{ github.event.pull_request.number }}
-        body: ${{ steps.ai_review.outputs.REVIEW }}
+        body: ${{ steps.ai_review.outputs }}
         token: ${{ secrets.GITHUB_TOKEN }}
