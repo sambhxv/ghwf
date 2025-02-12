@@ -1,108 +1,180 @@
 import os
 import ast
-import openai
-import subprocess
+import logging
+from dataclasses import dataclass
+from typing import List, Optional, Dict
+from pathlib import Path
+from openai import OpenAI
+from git import Repo, Git
+from functools import lru_cache
 
-openai.api_key = os.environ["OPENAI_API_KEY"]
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def get_changed_lines(file_path):
-    try:
-        base_sha = os.environ.get("GITHUB_BASE_SHA", os.environ.get("GITHUB_EVENT_PULL_REQUEST_BASE_SHA"))
-        head_sha = os.environ["GITHUB_SHA"]
-        diff = subprocess.check_output(
-            ["git", "diff", "-U0", base_sha, head_sha, "--", file_path]
-        ).decode()
+@dataclass
+class Function:
+    name: str
+    start: int
+    end: int
+    code: str
+
+class CodeReviewer:
+    def __init__(self, repo_path: str = '.'):
+        self.repo = Repo(repo_path)
+        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        self.base_ref = os.environ.get("GITHUB_BASE_REF", "main")
+        self.head_ref = os.environ.get("GITHUB_HEAD_REF", "HEAD")
         
-        changed_lines = []
-        for line in diff.split('\n'):
-            if line.startswith('+') and not line.startswith('+++'):
-                parts = line[1:].strip().split(':', 1)
-                if parts and parts[0].isdigit():
-                    changed_lines.append(int(parts[0]))
-        print(changed_lines)
-        return changed_lines
-    except Exception as e:
-        print(f"Error getting changed lines: {e}")
-        return []
+    @lru_cache(maxsize=100)
+    def get_changed_lines(self, file_path: Path) -> Dict[int, str]:
+        """Returns a dictionary of changed line numbers and their content."""
+        try:
+            diff = self.repo.git.diff(
+                f"origin/{self.base_ref}",
+                self.head_ref,
+                "--",
+                str(file_path),
+                unified=0
+            )
+            
+            changed_lines = {}
+            current_line = None
+            
+            for line in diff.split('\n'):
+                if line.startswith('@@'):
+                    # Parse the @@ -a,b +c,d @@ line to get new line numbers
+                    parts = line.split(' ')[2].split(',')[0]
+                    current_line = int(parts.lstrip('+'))
+                elif line.startswith('+') and not line.startswith('+++'):
+                    if current_line is not None:
+                        changed_lines[current_line] = line[1:]
+                        current_line += 1
+                        
+            return changed_lines
+        except Exception as e:
+            logger.error(f"Error getting changed lines for {file_path}: {e}")
+            return {}
 
-def get_functions(file_path):
-    """Parse Python file and return functions with line numbers"""
-    with open(file_path, "r") as f:
-        code = f.read()
-    
-    functions = []
-    try:
-        tree = ast.parse(code)
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                start = node.lineno
-                end = node.end_lineno
-                functions.append({
-                    "name": node.name,
-                    "start": start,
-                    "end": end,
-                    "code": ast.get_source_segment(code, node)
-                })
-    except Exception as e:
-        print(f"Error parsing {file_path}: {e}")
-    return functions
+    def parse_functions(self, file_path: Path) -> List[Function]:
+        """Parse Python file and return functions with their metadata."""
+        try:
+            code = file_path.read_text()
+            tree = ast.parse(code)
+            
+            functions = []
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef):
+                    functions.append(Function(
+                        name=node.name,
+                        start=node.lineno,
+                        end=node.end_lineno,
+                        code=ast.get_source_segment(code, node)
+                    ))
+            return functions
+            
+        except Exception as e:
+            logger.error(f"Error parsing {file_path}: {e}")
+            return []
 
-def analyze_code(code):
-    """Send code to OpenAI for review"""
-    try:
-        response = openai.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a senior Python developer. Review this code for:\n- Code quality\n- Potential bugs\n- Security issues\n- Performance improvements\n- Best practices\nProvide concise feedback in markdown."},
-                {"role": "user", "content": f"Code to review:\n```python\n{code}\n```"}
-            ],
-            temperature=0.2
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error generating review: {str(e)}"
+    def analyze_code(self, code: str, context: Optional[str] = None) -> str:
+        """Send code to OpenAI for review with improved prompt."""
+        try:
+            system_prompt = """You are an expert Python developer conducting a code review. Focus on:
+1. Code quality and readability
+2. Potential bugs and edge cases
+3. Security vulnerabilities
+4. Performance optimizations
+5. Python best practices and idioms
+6. Type hints and documentation
+
+Provide specific, actionable feedback with examples where relevant."""
+
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Review this Python code:\n```python\n{code}\n```"}
+            ]
+
+            if context:
+                messages.append({"role": "user", "content": f"Additional context: {context}"})
+
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=messages,
+                temperature=0.1,
+                max_tokens=1000
+            )
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            logger.error(f"Error generating review: {e}")
+            return f"Error: Unable to generate review due to: {str(e)}"
+
+    def generate_review(self) -> str:
+        """Generate a complete code review report."""
+        review_sections = ["# 🤖 AI Code Review Report\n"]
+        
+        try:
+            # Get all changed Python files
+            changed_files = [
+                Path(item.a_path)
+                for item in self.repo.index.diff(f"origin/{self.base_ref}")
+                if item.a_path.endswith('.py')
+            ]
+
+            for file_path in changed_files:
+                if not file_path.exists():
+                    continue
+
+                changed_lines = self.get_changed_lines(file_path)
+                functions = self.parse_functions(file_path)
+                
+                if not functions or not changed_lines:
+                    continue
+
+                review_sections.append(f"## 📁 {file_path}\n")
+                
+                for func in functions:
+                    # Check if function contains changed lines
+                    func_changed_lines = {
+                        line_num: content 
+                        for line_num, content in changed_lines.items()
+                        if func.start <= line_num <= func.end
+                    }
+                    
+                    if func_changed_lines:
+                        context = f"Changed lines in this function:\n" + \
+                                "\n".join(f"Line {num}: {content}" 
+                                        for num, content in func_changed_lines.items())
+                        
+                        analysis = self.analyze_code(func.code, context)
+                        review_sections.extend([
+                            f"### 🛠 Function: {func.name}",
+                            "#### Changes:",
+                            "```python",
+                            *[f"{num}: {content}" for num, content in func_changed_lines.items()],
+                            "```",
+                            "#### Review:",
+                            analysis,
+                            "\n"
+                        ])
+
+            return "\n".join(review_sections)
+            
+        except Exception as e:
+            logger.error(f"Error generating review report: {e}")
+            return f"# ❌ Error Generating Review\n\nAn error occurred: {str(e)}"
 
 def main():
-    review_output = ["## 🤖 AI Code Review Report"]
-
-    try:
-        changed_files = subprocess.check_output(
-            ["git", "diff", "--name-only", "--diff-filter=d", "origin/develop", "HEAD", "*.py"]
-        ).decode().splitlines()
-
-        for file in changed_files:
-            if not os.path.exists(file):
-                continue
-
-            functions = get_functions(file)
-            changed_lines = get_changed_lines(file)
-
-            if not functions:
-                continue
-
-            review_output.append(f"\n### 📁 File: {file}")
-
-            for func in functions:
-                modified = any(
-                    func["start"] <= lineno <= func["end"]
-                    for line in changed_lines
-                    if (lineno := int(line.split(':')[0]))
-                ) if changed_lines else False
-
-                if modified:
-                    analysis = analyze_code(func["code"])
-                    review_output.append(
-                        f"\n#### 🛠 Function: {func['name']}\n"
-                        f"{analysis}\n"
-                        f"```python\n{func['code']}\n```"
-                    )
-    except Exception as e:
-        review_output.append(f"\nError processing code review: {str(e)}")
-
-    with open('review.md', 'w') as f:
-        f.write('\n'.join(review_output))
-
-    sanitized_review = '\n'.join(review_output).replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')
+    return "HEHE"
+    reviewer = CodeReviewer()
+    review = reviewer.generate_review()
+    
+    # Save review to file
+    Path('review.md').write_text(review)
+    
+    # Output for GitHub Actions
+    sanitized_review = review.replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')
     print(f"::set-output name=REVIEW::{sanitized_review}")
 
 if __name__ == "__main__":
