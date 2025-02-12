@@ -31,10 +31,10 @@ def get_code_review(diff_text, openai_api_key):
         {"role": "user", "content": diff_text}
     ]
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+        response = openai.chat.completions.create((
+            model="gpt-4o-mini",
             messages=messages,
-            max_tokens=1024,
+            max_tokens=5000,
             temperature=0.2
         )
     except Exception as e:
