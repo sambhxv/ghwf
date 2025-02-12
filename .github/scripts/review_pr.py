@@ -23,9 +23,10 @@ def get_code_review(diff_text, openai_api_key):
         {
             "role": "system",
             "content": (
-                "You are a code review assistant. "
-                "Provide a detailed and critical review of the following pull request diff. "
-                "Point out potential issues, pitfalls, and offer improvement suggestions where applicable."
+                "You are a code review and testing assistant. "
+                "Provide critical review of the following pull request diff. "
+                "Point out potential issues, pitfalls, and offer improvement suggestions where applicable. "
+                "Also suggest test-cases if and only if there are functional level changes in the code which may require test cases to be verified."
             )
         },
         {"role": "user", "content": diff_text}
