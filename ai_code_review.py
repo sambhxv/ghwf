@@ -23,9 +23,10 @@ class CodeReviewer:
     def __init__(self, repo_path: str = '.'):
         self.repo = Repo(repo_path)
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-        self.base_ref = os.environ.get("GITHUB_BASE_REF", "main")
+        self.base_ref = os.environ.get("GITHUB_BASE_REF", "develop")
         self.head_ref = os.environ.get("GITHUB_HEAD_REF", "HEAD")
-        
+        print("os_environ: " + os.environ)
+
     @lru_cache(maxsize=100)
     def get_changed_lines(self, file_path: Path) -> Dict[int, str]:
         """Returns a dictionary of changed line numbers and their content."""
