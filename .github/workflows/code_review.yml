@@ -5,43 +5,34 @@ on:
     types: [opened, synchronize]
 
 permissions:
-  pull-requests: write
+  issues: write
   contents: read
 
 jobs:
-  ai-code-review:
+  review:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Run AI Code Review
+        id: ai_review
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python ai_code_review.py > review.md
+          
+          {
+            echo "REVIEW<<EOF"
+            cat review.md
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
-    - name: Install dependencies
-      run: |
-        pip install openai gitpython unidiff requests
-
-    - name: Set environment variables for SHAs
-      run: |
-        echo "GITHUB_EVENT_PULL_REQUEST_BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
-
-    - name: Run AI Code Review
-      id: ai_review
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        python ai_code_review.py > review.md
-        echo "REVIEW=$(cat review.md)" >> $GITHUB_OUTPUT
-
-    - name: Create PR comment
-      uses: peter-evans/create-or-update-comment@v3
-      with:
-        issue-number: ${{ github.event.pull_request.number }}
-        body: ${{ steps.ai_review.outputs.REVIEW }}
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create PR comment
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ${{ steps.ai_review.outputs.REVIEW }}
+          token: ${{ secrets.GITHUB_TOKEN }}
