@@ -1,15 +1,15 @@
-name: AI Code Review
+name: Code review and test cases suggestions
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, reopened]
 
 permissions:
   pull-requests: write
   contents: read
 
 jobs:
-  ai-code-review:
+  review-and-generate-suggestions:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -27,13 +27,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install openai requests
 
-      - name: Run AI Code Review
-        id: ai_review
+      - name: Generate code and test-case review
+        id: review_job
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python .github/scripts/review_pr.py > review.md
+          python .github/scripts/review.py > review.md
           echo "REVIEW<<EOF" >> $GITHUB_OUTPUT
           cat review.md >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -42,5 +42,5 @@ jobs:
         uses: peter-evans/create-or-update-comment@v3
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.ai_review.outputs.REVIEW }}
+          body: ${{ steps.review_job.outputs.REVIEW }}
           token: ${{ secrets.GITHUB_TOKEN }}
