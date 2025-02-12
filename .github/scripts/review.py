@@ -22,10 +22,11 @@ def get_code_review(diff_text, openai_api_key):
         {
             "role": "system",
             "content": (
-                "You are a code review and test assistant. "
+                "You are a code review assistant. "
                 "Provide a critical and crisp, to-the-point review of the following pull request diff. "
-                "Point out potential issues, pitfalls, and offer improvement suggestions where applicable. "
+                "Point out potential issues and offer improvement suggestions where applicable. "
                 "Also suggest test-cases wherever there are logical changes."
+                "IMPORTANT: Do not provide any extra information, "
             )
         },
         {"role": "user", "content": diff_text}
@@ -34,8 +35,8 @@ def get_code_review(diff_text, openai_api_key):
         response = openai.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
-            max_tokens=5000,
-            temperature=0.2
+            max_tokens=1200,
+            temperature=0.5
         )
     except Exception as e:
         print(f"Error calling OpenAI API: {e}", file=sys.stderr)
