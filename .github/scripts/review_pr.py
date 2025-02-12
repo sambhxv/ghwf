@@ -31,7 +31,7 @@ def get_code_review(diff_text, openai_api_key):
         {"role": "user", "content": diff_text}
     ]
     try:
-        response = self.client.chat.completions.create(
+        response = openai.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
             max_tokens=1024,
