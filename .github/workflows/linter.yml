@@ -3,10 +3,7 @@ name: Lint and Whitespaces Check
 on:
   pull_request:
     branches:
-      - main
-  push:
-    branches:
-      - main
+      - develop
 
 jobs:
   lint:
