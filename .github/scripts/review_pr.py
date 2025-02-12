@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import sys
 import json
@@ -77,16 +78,17 @@ def main():
         print("Error: OPENAI_API_KEY not set.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Fetching diff for PR #{pr_number} in {owner}/{repo}...")
+    # Log messages to stderr so only the review output goes to stdout.
+    print(f"Fetching diff for PR #{pr_number} in {owner}/{repo}...", file=sys.stderr)
     diff_text = get_pr_diff(owner, repo, pr_number, github_token)
     if not diff_text:
         print("Error: No diff fetched.", file=sys.stderr)
         sys.exit(1)
 
-    print("Sending diff to OpenAI for code review...")
+    print("Sending diff to OpenAI for code review...", file=sys.stderr)
     review = get_code_review(diff_text, openai_api_key)
 
-    print("\n==== Code Review ====\n")
+    # Output only the review content to stdout.
     print(review)
 
 if __name__ == "__main__":
