@@ -170,7 +170,7 @@ def main():
     review = reviewer.generate_review()
     
     # Save review to file
-    Path('review.md').write_text(review)
+    Path('review.md').write_text("this is a sample code review")
     
     # Output for GitHub Actions
     sanitized_review = review.replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')
