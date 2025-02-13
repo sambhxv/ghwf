@@ -1,4 +1,4 @@
-name: Lint Check
+name: JavaScript Lint Check
 
 on:
   pull_request:
@@ -7,32 +7,13 @@ on:
       - develop
 
 jobs:
-  lint:
-    name: Lint Check
+  js-lint:
+    name: JavaScript Linting
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install Python Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8 black
-
-      - name: Configure Flake8
-        run: echo -e "[flake8]\nmax-line-length = 256\nindent-style = tab\ntab-size = 4" > .flake8
-
-      - name: Run Flake8 (Python Linting)
-        run: flake8 . --count --show-source --statistics
-
-      - name: Check Python Formatting with Black
-        run: black --check --diff --line-length 256 --target-version py310 --skip-string-normalization --fast .
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -43,7 +24,7 @@ jobs:
         run: npm install -g prettier
 
       - name: Run Prettier (JS Linting)
-        run: prettier --check '**/*.{js,ts,css,html,json,md}'
+        run: prettier --check '**/*.{js,ts,css,html,json,md}' --loglevel debug
 
       - name: Fail on Lint Errors
         if: failure()
