@@ -2,9 +2,8 @@ name: JavaScript Lint Check
 
 on:
   pull_request:
-    branches:
-      - main
-      - develop
+    types: [opened, synchronize, reopened]
+    branches: [develop, development, main, master]
 
 jobs:
   js-lint:
