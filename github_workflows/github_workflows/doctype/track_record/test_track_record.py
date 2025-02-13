@@ -6,4 +6,4 @@ from frappe.tests.utils import FrappeTestCase
 
 
 class TestTrackRecord(FrappeTestCase):
-	frappe.msgprint("heheh")
+    frappe.msgprint("heh")
