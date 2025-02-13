@@ -4,6 +4,7 @@ import json
 import requests
 import openai
 
+
 def get_pr_diff(owner, repo, pr_number, github_token):
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
     headers = {
@@ -15,6 +16,7 @@ def get_pr_diff(owner, repo, pr_number, github_token):
         print(f"Error: Failed to fetch PR diff (HTTP {response.status_code}).", file=sys.stderr)
         sys.exit(1)
     return response.text
+
 
 def get_code_review(diff_text, openai_api_key):
     openai.api_key = openai_api_key
@@ -40,6 +42,7 @@ def get_code_review(diff_text, openai_api_key):
         print(f"Error calling OpenAI API: {e}", file=sys.stderr)
         sys.exit(1)
     return response.choices[0].message.content.strip()
+
 
 def main():
     github_event_path = os.environ.get("GITHUB_EVENT_PATH")
@@ -84,5 +87,7 @@ def main():
 
     print(review)
 
+
 if __name__ == "__main__":
     main()
+
