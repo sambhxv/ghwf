@@ -24,7 +24,7 @@ jobs:
         run: npm install -g prettier
 
       - name: Run Prettier (JS Linting)
-        run: prettier --check '**/*.{js,ts,css,html,json,md}' --log-level --write
+        run: prettier --check '**/*.{js,ts,css,html,json,md}' --log-level warn --write
 
       - name: Fail on Lint Errors
         if: failure()
