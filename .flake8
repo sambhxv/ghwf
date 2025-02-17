@@ -1,5 +1,6 @@
 [flake8]
 max-line-length = 256
-indent-size = 4
+indent-style = tab
+tab-size = 4
 exclude = .git,__pycache__,venv,.venv
 ignore = W391
