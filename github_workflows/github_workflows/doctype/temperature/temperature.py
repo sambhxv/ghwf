@@ -6,11 +6,12 @@ from frappe.model.document import Document
 
 
 class Temperature(Document):
-	pass
+    pass
+
 
 class Calculator:
     def add(self, a, b):
-	    return a + b
+        return a + b
 
     def subtract(self, a, b):
         return a - b
@@ -20,5 +21,5 @@ class Calculator:
 
     def divide(self, a, b):
         if b == 0:
-	    raise ValueError("Cannot divide by zero")
+            raise ValueError("Cannot divide by zero")
         return a / b
