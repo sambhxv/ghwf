@@ -13,6 +13,7 @@ class Calculator {
     }
 
     subtract(a, b) {
+	console.log(a + b);
         return a - b;
     }
 
