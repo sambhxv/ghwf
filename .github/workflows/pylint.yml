@@ -1,30 +1,26 @@
 name: Python Lint Check
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches: [develop, development, main, master]
+
 jobs:
-  python-lint:
-    name: Python Linting
+  linter:
+    name: 'Semgrep Rules'
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-      - name: Install Python Dependencies
+          python-version: '3.13'
+          cache: pip
+
+      - name: Download Semgrep rules
+        run: git clone --depth 1 https://github.com/frappe/semgrep-rules.git frappe-semgrep-rules
+
+      - name: Run Semgrep rules
         run: |
-          python -m pip install --upgrade pip
-          pip install flake8 black
-      - name: Configure Flake8
-        run: |
-          echo -e "[flake8]\nmax-line-length = 256\nindent-style = tab\ntab-size = 4\nextend-ignore = E101,E302,W191,W391" > .flake8
-      - name: Run Flake8 (Python Linting)
-        run: flake8 . --count --show-source --statistics
-      - name: Check Python Formatting with Black
-        run: black --check --diff --line-length 256 --target-version py310 --skip-string-normalization --fast . --use-tabs
-      - name: Fail on Lint Errors
-        if: failure()
-        run: exit 1
+          pip install semgrep
+          semgrep ci --config ./frappe-semgrep-rules/rules --config r/python.lang.correctness
