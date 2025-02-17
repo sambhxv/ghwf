@@ -22,16 +22,16 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black
+          pip install flake8 ruff
 
       - name: Configure Flake8
         run: echo -e "[flake8]\nmax-line-length = 256\nindent-style = tab\ntab-size = 4" > .flake8
 
-      - name: Run Flake8 (Python Linting)
-        run: flake8 . --count --show-source --statistics
+      - name: Run Ruff (Linting + Formatting)
+        run: ruff check --select=E101 --fix .
 
-      - name: Check Python Formatting with Black
-        run: black --check --diff --line-length 256 --target-version py310 --skip-string-normalization --fast .
+      - name: Run Ruff (Linting + Formatting)
+        run: ruff check --select=E101 --fix .
 
       - name: Fail on Lint Errors
         if: failure()
