@@ -9,8 +9,8 @@ class Temperature(Document):
 	pass
 
 class Calculator:
-	def add(self, a, b):
-		return a + b
+    def add(self, a, b):
+	return a + b
 
     def subtract(self, a, b):
         return a - b
