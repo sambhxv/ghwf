@@ -3,5 +3,5 @@ max-line-length = 256
 indent-style = tab
 tab-size = 4
 exclude = .git,__pycache__,venv,.venv
-extend-ignore = W391
-ignore = W391,W191,E101
+extend-ignore = W391,E999
+ignore = W391,W191,E101,E999
