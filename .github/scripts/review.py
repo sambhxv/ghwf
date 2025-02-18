@@ -17,11 +17,15 @@ def get_pr_diff(owner, repo, pr_number, github_token):
 
 def get_code_review(diff_text, cloud_function_url):
     API_KEY = os.environ.get("API_KEY")
-    headers = {"Content-Type": "application/json", "X-API-Key": API_KEY}
+    print(API_KEY)
+    headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'pd1t-zzk0-qc49-783q'
+    }
     payload = json.dumps({"diff": diff_text})
     
     try:
-        response = requests.post(cloud_function_url, headers=headers, data=payload)
+        response = requests.request("POST", cloud_function_url, headers=headers, data=payload)
         if response.status_code != 200:
             print(f"Error: Cloud Function returned HTTP {response.status_code}: {response.text}", file=sys.stderr)
             sys.exit(1)
