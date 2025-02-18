@@ -17,7 +17,7 @@ def get_pr_diff(owner, repo, pr_number, github_token):
 
 def get_code_review(diff_text, cloud_function_url):
     API_KEY = os.environ.get("API_KEY")
-    headers = {"Content-Type": "application/json", "Authorization": API_KEY}
+    headers = {"Content-Type": "application/json", "X-API-Key": API_KEY}
     payload = json.dumps({"diff": diff_text})
     
     try:
