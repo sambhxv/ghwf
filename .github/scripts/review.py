@@ -37,7 +37,6 @@ def get_code_review(diff_text, cloud_function_url):
         sys.exit(1)
 
 def main():
-    print(str(os.environ), file=sys.stderr)
     github_event_path = os.environ.get("GITHUB_EVENT_PATH")
     if not github_event_path:
         print("Error: GITHUB_EVENT_PATH not set.", file=sys.stderr)
