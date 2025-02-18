@@ -23,7 +23,8 @@ class Calculator {
 
     divide(a, b) {
         if (b === 0) {
-            throw new Error("Cannot divide by zero");
+			console.log("hehehehe");
+            throw new Error("Cannot divide by zero!");
         }
         return a / b;
     }
