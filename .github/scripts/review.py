@@ -17,7 +17,7 @@ def get_pr_diff(owner, repo, pr_number, github_token):
 
 def get_code_review(diff_text, cloud_function_url):
     function_api_key = os.environ.get("FUNCTION_API_KEY")
-    if not FUNCTION_API_KEY:
+    if not function_api_key:
         print("Error: function_api_key not found.", file=sys.stderr)
         sys.exit(1)
     headers = {
