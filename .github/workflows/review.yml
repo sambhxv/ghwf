@@ -33,6 +33,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CLOUD_FUNCTION_URL: ${{ secrets.CLOUD_FUNCTION_URL }}
+          FUNCTION_API_KEY: ${{ secrets.FUNCTION_API_KEY }}
         run: |
           python .github/scripts/review.py > review.md
           echo "REVIEW<<EOF" >> $GITHUB_OUTPUT
