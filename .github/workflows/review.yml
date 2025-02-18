@@ -3,7 +3,7 @@ name: Review suggestions
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    branches: [develop, development, main, master]
+    branches: [develop, development, main, master, x]
 
 permissions:
   pull-requests: write
@@ -26,13 +26,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install openai requests
+          pip install requests
 
       - name: Generate code and test-case review
         id: review_job
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLOUD_FUNCTION_URL: ${{ secrets.CLOUD_FUNCTION_URL }}
+          FUNCTION_API_KEY: ${{ secrets.FUNCTION_API_KEY }}
         run: |
           python .github/scripts/review.py > review.md
           echo "REVIEW<<EOF" >> $GITHUB_OUTPUT
