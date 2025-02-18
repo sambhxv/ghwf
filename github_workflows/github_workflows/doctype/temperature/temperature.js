@@ -23,7 +23,7 @@ class Calculator {
 
     divide(a, b) {
         if (b === 0) {
-            throw new Error("Cannot divide by zero! Try with some other value.");
+            throw new Error("Cannot divide by zero! Try with some other value!");
         }
         return a / b;
     }
