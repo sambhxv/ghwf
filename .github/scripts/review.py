@@ -16,13 +16,13 @@ def get_pr_diff(owner, repo, pr_number, github_token):
     return response.text
 
 def get_code_review(diff_text, cloud_function_url):
-    FUNCTION_API_KEY = os.environ.get("FUNCTION_API_KEY")
+    function_api_key = os.environ.get("FUNCTION_API_KEY")
     if not FUNCTION_API_KEY:
-        print("Error: FUNCTION_API_KEY not found.", file=sys.stderr)
+        print("Error: function_api_key not found.", file=sys.stderr)
         sys.exit(1)
     headers = {
       "Content-Type": "application/json",
-      "Authorization": FUNCTION_API_KEY
+      "Authorization": function_api_key
     }
     payload = json.dumps({"diff": diff_text})
     try:
