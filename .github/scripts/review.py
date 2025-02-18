@@ -16,9 +16,13 @@ def get_pr_diff(owner, repo, pr_number, github_token):
     return response.text
 
 def get_code_review(diff_text, cloud_function_url):
+    function_api_key = os.getenv("FUNCTION_API_KEY")
+    if not function_api_key:
+        print("function_api_key not found", file=sys.stderr)
+        sys.exit(1)
     headers = {
       "Content-Type": "application/json",
-      "Authorization": "pd1t-zzk0-qc49-783q"
+      "Authorization": function_api_key
     }
     payload = json.dumps({"diff": diff_text})
     try:
@@ -63,7 +67,7 @@ def main():
         print("Error: GITHUB_TOKEN not set.", file=sys.stderr)
         sys.exit(1)
 
-    cloud_function_url = os.environ.get("CLOUD_FUNCTION_URL")
+    cloud_function_url = os.getenv("CLOUD_FUNCTION_URL")
     print(cloud_function_url, file=sys.stderr)
     if not cloud_function_url:
         print("Error: CLOUD_FUNCTION_URL not set.", file=sys.stderr)
